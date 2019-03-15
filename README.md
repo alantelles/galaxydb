@@ -8,6 +8,7 @@ That said, from now on, all subjects about implementation will be based in Pytho
 
 ### Features
 
+- Easy installation: just copy the sources to your projects and include modules as you need.
 - The binary modelling makes it good for storing any type of data.
 - Indirect access engine. Makes data gathering more efficient.
 - Distributed data storage possibility based in developers configurations. (in course)
