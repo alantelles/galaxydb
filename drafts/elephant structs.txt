@@ -1,0 +1,26 @@
+Max pages = 2^2 bytes (65536 pages)
+Max size of a page = 2^4 bytes (4294967296 bytes, 4GB)
+Max size of a table = 65536 * 4294967296 = 256 TB
+
+page struct
+2 bytes    Vari
+[ (PAGE) ] [ (RECORDS) ]
+
+record struct
+2 bytes   Vari       2 bytes   Vari
+[ FIELD ] [ (SIZE) ] [ VALUE ] [ (CONTENT) ]*
+
+record struct (as is)
+Vari
+[ CONTENT ]
+
+trash fields can be created when a record is moved
+2 bytes   Vari       2 bytes   Vari
+[ FIELD ] [ (SIZE) ] [ TRASH ] [ (CONTENT) ]
+
+if the new value fit to the old the size is updated, else the register is moved and the field have the value field turn to TRASH
+TRASH field are available to new records
+
+address struct
+ 2 bytes    id_size  2 bytes     MAX_COLS   MAX_PAGES  MAX_PAGE_SIZE Vari       
+([ RECORD ] [ id ]  ([  FIELD  ] [ (CODE) ] [ (PAGE) ] [ (ADDRESS) ] [ (LENGTH) ])*)* 
