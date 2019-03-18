@@ -52,9 +52,9 @@ class Logic:
         return ['and',self.big_eq(field,val1),self.less_eq(field,val2)]
     
     def like(self,field,val,pos=None):
-        if pos == 'x...':
+        if pos == 'x..':
             return (field,'LIKE%',val)
-        elif pos == '...x':
+        elif pos == '..x':
             return (field,'%LIKE',val)
         else:
             return (field,'LIKE',val)

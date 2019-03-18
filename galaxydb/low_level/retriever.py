@@ -1,4 +1,5 @@
 from ..constants import *
+from ..statics import *
 from struct import unpack,pack
 from datetime import datetime
 import time
@@ -73,24 +74,7 @@ class Retriever:
                         data = l[fields[k]]
                         val_b = self.byte_val(vals[k],fields[k])
                         comp = opers[k]
-                        if comp == '=':
-                            test = data == val_b
-                        elif comp == '>':
-                            test = data > val_b
-                        elif comp == '<':
-                            test = data < val_b
-                        elif comp == '!=':
-                            test = data != val_b
-                        elif comp == '<=':
-                            test = data <= val_b
-                        elif comp == '>=':
-                            test = data >= val_b
-                        elif comp == 'LIKE%':
-                            test = data.find(val_b) == 0
-                        elif comp == '%LIKE':
-                            test = data.find(val_b) == len(data)-1
-                        elif comp == 'LIKE':
-                            test = data.find(val_b) > -1
+                        test = logic_oper(comp,data,val_b)
                         if test:
                             match = True
                             if logic == 'or':
@@ -140,30 +124,19 @@ class Retriever:
                 length = from_bytes_e(length)
                 data = self.find_data_by_addr(page,addr,length)
                 # tests
-                if comp == '=':
-                    test = data == val_b
-                elif comp == '>':
-                    test = data > val_b
-                elif comp == '<':
-                    test = data < val_b
-                elif comp == '!=':
-                    test = data != val_b
-                elif comp == '<=':
-                    test = data <= val_b
-                elif comp == '>=':
-                    test = data >= val_b
-                elif comp == 'LIKE%':
-                    test = data.find(val_b) == 0
-                elif comp == '%LIKE':
-                    test = data.find(val_b) == len(data)-len(val_b)
-                elif comp == 'LIKE':
-                    test = data.find(val_b) > -1
+                test = logic_oper(comp,data,val_b)
                 # end tests
                 if test:
                     for i in range(pos,last,-1):
-                        test = to_bytes_e(a[i],0)+to_bytes_e(a[i+1],0)
+                        test = b''
+                        for temp in range(len(RECORD)):
+                            test += to_bytes_e(a[temp+i],0)
+                        #test = to_bytes_e(a[i],0)+to_bytes_e(a[i+1],0)
                         if test == RECORD:
-                            id = a[i+2]+a[i+3]
+                            id = []
+                            for temp in range(maxes['max_regs']):
+                                id.append(a[temp+len(RECORD)+i])
+                            id = from_bytes_e(bytes(id))
                             ids.append(id)
                             ret.append(self.find_record_by_id(id))
                             break

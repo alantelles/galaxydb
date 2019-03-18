@@ -1,4 +1,5 @@
 from ..constants import *
+from ..statics import *
 import os
 from struct import pack
 import datetime

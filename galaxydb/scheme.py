@@ -3,6 +3,7 @@ from .column import Column
 import os
 import json
 from .constants import *
+from .statics import *
 class Scheme:
     def __init__(self,name): # max_values is a dict
         self.name = name
