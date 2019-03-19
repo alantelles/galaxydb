@@ -54,9 +54,7 @@ class Scheme:
         if not 'table' in locations:
             self.sch['locations']['table'] = TABLES+os.sep+self.name
         if not 'address' in locations:
-            self.sch['locations']['address'] = TABLES+os.sep+self.name+os.sep+self.name+ADDR_EXT
-        else:
-            self.sch['locations']['address'] = locations['address']+os.sep+self.name+ADDR_EXT
+            self.sch['locations']['address'] = TABLES+os.sep+self.name
         
     def __str__(self):
         out='Scheme: {}\n'.format(self.name)

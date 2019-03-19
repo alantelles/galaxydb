@@ -173,13 +173,13 @@ class Table():
         return len(items)
 
 #order methods
-    def order(self,*rules)
+    def order(self,*rules):
         r = []
         for i in rules:
             if isinstance(i,tuple):
                 r.append({'col':i[0],'dir':i[1]})
             elif isinstance(i,str):
-                r.append({'col':i[0],'dir':ASC)
+                r.append({'col':i[0],'dir':ASC})
             else:
                 raise Excepetion ('Unknown direction order modifier')
         ## some order algorithm
