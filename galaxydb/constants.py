@@ -22,16 +22,15 @@ DUMP_EXT='.elph'
 TBL_EXT='.eltb'
 SCH_EXT='.elsc'
 ADDR_EXT='.elad'
-TABLES = ROOT+'tables'
 
 MAX_COLS = 2 #max number of cols is 2^(8*MAX_COLS), default 65536 cols
 MAX_REGS = 2 #max number of registers in a table is 2^(8*MAX_REGS), default 65536 regs
 MAX_PAGES = 2 #max number of pages is 2^(8*MAX_PAGES), default 256 pages 
 MAX_PAGE_SIZE = 3 #max size of a page is 2^(8*MAX_PAGE_SIZE), default 16777216 (16MB)
-MAX_DEFAULT = {'max_regs':2, 'max_pages':2, 'max_page_size':3, 'max_cols':2}
+MAX_DEFAULT = {'max_regs':MAX_REGS, 'max_pages':MAX_PAGES, 'max_page_size':MAX_PAGE_SIZE, 'max_cols':MAX_COLS}
 
 SCHEMES = ROOT+'schemes' #folder to save the schemes files
-
+TABLES = ROOT+'tables' #default folder to tables
 # others
 RET_AS_NAMESPACE = True
 

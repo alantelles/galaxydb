@@ -9,7 +9,7 @@ class Retriever:
         self.name = name
         self.scheme = scheme
         addr_path = TABLES+os.sep+self.name+os.sep+self.name+ADDR_EXT
-        self.tb_prefix = TABLES+os.sep+self.name+os.sep+self.name+'-'
+        #self.tb_prefix = TABLES+os.sep+self.name+os.sep+self.name+'-'
         self.addr_path = addr_path
         f = open(addr_path,'rb')
         self.addr = f
