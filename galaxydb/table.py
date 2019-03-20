@@ -29,8 +29,8 @@ class Table():
     def all(self,as_namespace = RET_AS_NAMESPACE):
         self.data = []
         r = Retriever(self.name,self.scheme)
-        ret = r.find_all()[0]
-        self.data = ret
+        ret = r.find_all()
+        self.data = ret[0]
         self.found_ids = ret[1]
         r.close_retriever()
         if (as_namespace):
