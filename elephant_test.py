@@ -1,6 +1,7 @@
 from models.user import User
 from galaxydb.logic import Logic
 from galaxydb.scheme import Scheme
+from galaxydb.constants import *
 import time
 def print_row(r):
     print(r.id,r.name,r.username,r.password)
@@ -12,8 +13,9 @@ st=time.time()
 u = User()
 #y = u.all()
 #print_list(y)
-x = u.login('alantelles','zikazika')
-print_row(x)
+#x = u.login('alantelles','zikazika')
+x = u.filter(Logic().like('name','i')).order('name','password').get()
+print_list(x)
 
 #s = Scheme('users')
 #s.delete_scheme()
@@ -27,9 +29,10 @@ regs = [
     ('Marcelino Telles','linao','guitarra'),
     ('João Augusto','joauzaum','jva2001'),
     ('Keli Pereira','kelicris','fofolete'),
-    ('Philipe Pinheiro','philipe','phrp')
+    ('Philipe Pinheiro','philipe','phrp'),
+    ('Heber Passos','hebinho','1000lchopp')
 ]
 #u.insert_by_tuple(fields,regs)
-
+#u.insert({'name':'Marina Pereira','username':'marina2'})
 en=time.time()
 print('Benchmark:',en-st)

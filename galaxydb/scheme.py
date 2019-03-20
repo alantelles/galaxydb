@@ -36,13 +36,15 @@ class Scheme:
                     self.load_scheme()
                     addr = self.sch['locations']['address']+os.sep+self.name+ADDR_EXT
                     print("Deleting address file")
-                    os.remove(addr)
+                    if os.path.exists(addr):
+                        os.remove(addr)
                     table = self.sch['locations']['table']+os.sep+self.name
                     print('Deleting pages')
                     for f in os.listdir(table):
                         if f.endswith(TBL_EXT):
                             print("Deleting page {}".format(f))
-                            os.remove(f)
+                            if os.path.exists(table+os.sep+f):
+                                os.remove(table+os.sep+f)
                     print('Deleting table folder {}'.format(table))
                     os.rmdir(table)
                     print('All scheme files were deleted')

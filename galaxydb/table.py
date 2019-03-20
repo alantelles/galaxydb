@@ -187,13 +187,12 @@ class Table():
         return len(items)
 
 #order methods
-    def order(self,*rules):
-        r = []
-        for i in rules:
-            if isinstance(i,tuple):
-                r.append({'col':i[0],'dir':i[1]})
-            elif isinstance(i,str):
-                r.append({'col':i[0],'dir':ASC})
-            else:
-                raise Excepetion ('Unknown direction order modifier')
+    def order(self,direction,*rules):
+        rules = list(rules)
+        if not type(direction) == bool:
+            rules.insert(0,direction)
+            direction = ASC
+        newlist = sorted(self.data, key=lambda k: ([k[x] for x in rules]), reverse=direction)
+        self.data = newlist
+        return self
         ## some order algorithm

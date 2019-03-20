@@ -17,4 +17,4 @@ locations = {
 }
 sch = Scheme('users')
 sch.create(tds,max_values)
-sch.save()
+sch.save(True)
