@@ -36,13 +36,13 @@ class Logic:
             tests.append(ALL)
         return self.l_and(*tests)
         
-    def l_or(self,*l):
+    def logic_or(self,*l):
         ret = ['or']
         for i in l:
             ret.append(i)
         return ret
         
-    def l_and(self,*l):
+    def logic_and(self,*l):
         ret = ['and']
         for i in l:
             ret.append(i)

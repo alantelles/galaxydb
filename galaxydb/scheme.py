@@ -37,9 +37,6 @@ class Scheme:
             j.params['name'] = j.name
             j.params['col_id'] = len(columns)
             columns.append(j.params)
-            #j.params['column'] = i+1
-            #columns[j.name] = j.params
-        #max_names = ['max_regs','max_cols', 'max_pages', 'max_page_size']
         for i,j in MAX_DEFAULT.items():
             if i in max_values:
                 if max_values[i] != 0:
@@ -64,15 +61,18 @@ class Scheme:
                 out+='    '+k+': '+str(l)+'\n'
         return out
         
-    def save(self):
-        print('Saving scheme "{}"'.format(self.name))
+    def save(self,log=False):
+        if log:
+            print('Saving scheme "{}"'.format(self.name))
         with open(self.sch_path,'wt') as f:
             json.dump(self.sch,f)
-            print('Scheme {} saved in {}'.format(self.name,self.sch_path))
-        print('Details: ')
-        with open(self.sch_path,'rt') as f:
-            parsed = json.load(f)
-            print(json.dumps(parsed,indent=4,sort_keys=True))
+            if log:
+                print('Scheme {} saved in {}'.format(self.name,self.sch_path))
+        if log:
+            print('Details: ')
+            with open(self.sch_path,'rt') as f:
+                parsed = json.load(f)
+                print(json.dumps(parsed,indent=4,sort_keys=True))
         for i,j in self.sch['locations'].items():
             if not os.path.exists(j):
                 os.mkdir(j)

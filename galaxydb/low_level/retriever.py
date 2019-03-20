@@ -8,8 +8,9 @@ class Retriever:
     def __init__(self,name,scheme):
         self.name = name
         self.scheme = scheme
-        addr_path = TABLES+os.sep+self.name+os.sep+self.name+ADDR_EXT
-        #self.tb_prefix = TABLES+os.sep+self.name+os.sep+self.name+'-'
+        #addr_path = TABLES+os.sep+self.name+os.sep+self.name+ADDR_EXT
+        addr_path = self.scheme['locations']['address']+os.sep+self.name+ADDR_EXT
+        self.tb_prefix = self.scheme['locations']['table']+os.sep+self.name+os.sep+self.name+'-'
         self.addr_path = addr_path
         f = open(addr_path,'rb')
         self.addr = f

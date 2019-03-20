@@ -18,10 +18,10 @@ PRIMARY_KEY, AUTO_INC, UNIQUE = 'PRIMARY_KEY', 'AUTO_INC', 'UNIQUE'
 
 #default names
 STR_ENC='utf-8'
-DUMP_EXT='.elph'
-TBL_EXT='.eltb'
-SCH_EXT='.elsc'
-ADDR_EXT='.elad'
+DUMP_EXT='.glxy'
+TBL_EXT='.gltb'
+SCH_EXT='.glsc'
+ADDR_EXT='.glad'
 
 MAX_COLS = 2 #max number of cols is 2^(8*MAX_COLS), default 65536 cols
 MAX_REGS = 2 #max number of registers in a table is 2^(8*MAX_REGS), default 65536 regs

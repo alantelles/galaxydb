@@ -1,0 +1,5 @@
+2019-03-20
+
+Validating locations
+Working with inherited models
+Model heritage and selection children methods working

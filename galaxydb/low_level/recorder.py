@@ -8,8 +8,8 @@ import time
 class Recorder:
     def __init__(self,name,scheme):
         self.name = name
-        self.tables_path = TABLES+os.sep+self.name
-        address_path = self.tables_path+os.sep+self.name+ADDR_EXT
+        #self.tables_path = TABLES+os.sep+self.name
+        #address_path = self.tables_path+os.sep+self.name+ADDR_EXT
         self.pages = []
         self.rec_buffer = []
         self.addr_buffer = []
@@ -17,6 +17,11 @@ class Recorder:
         self.lengths = []
         self.columns = scheme['columns']
         self.maxes = scheme['max_values']
+        self.locations = scheme['locations']
+        self.tables_path = self.locations['table']+os.sep+self.name
+        if not os.path.exists(self.tables_path):
+            os.mkdir(self.tables_path)
+        self.address_path = self.locations['address']+os.sep+self.name+ADDR_EXT
         for f in os.listdir(self.tables_path):
             if f.endswith(TBL_EXT):
                 self.pages.append(self.tables_path+os.sep+f)
@@ -27,14 +32,14 @@ class Recorder:
             page_num = self.pages[-1][self.pages[-1].rfind('-')+1:self.pages[-1].rfind('.')]
             page = self.pages[-1]
             self.f = open(page,'ab')
-            self.addr = open(address_path,'rb+')
+            self.addr = open(self.address_path,'rb+')
         else:
             #it's the first page
             #page_num = zeros_needed_fmt(self.maxes['max_pages']).format(0)
             page_num = zeros_needed_fmt(self.maxes['max_pages']).format(0)
             page = self.tables_path+os.sep+self.name+'-'+page_num+TBL_EXT
             self.f = open(page,'wb')
-            self.addr = open(address_path,'wb')
+            self.addr = open(self.address_path,'wb')
             self.addr.write(FILE_END)
         self.get_auto_inc()
         self.page = int(page_num)

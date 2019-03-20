@@ -87,13 +87,19 @@ class Table():
         return self
         
 # strictly built logic conditional methods            
-    def find(self,val):
+    def find(self,val,as_namespace=RET_AS_NAMESPACE):
         r = Retriever(self.name,self.scheme)
         k = r.find_record_by_id(val)
-        self.data = k[0]
-        self.found_ids = k[1]
         r.close_retriever()
-        return k
+        if not k == None:
+            self.data = k
+            self.found_ids = k['id']
+            if (as_namespace):
+                return Namespace(**self.data)
+            else:
+                return self.data
+        else:
+            return None
         
     def column_equals(self,field,val):
         self.data = []
