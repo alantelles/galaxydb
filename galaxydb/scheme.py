@@ -24,6 +24,36 @@ class Scheme:
         with open(self.sch_path,'rt') as f:
             self.sch = json.load(f)
         return self.sch
+        
+    def delete_scheme(self):
+        done = False
+        while not done:
+            opt = input("Are you really sure you want to delete the scheme {} and all related files? (Y/n)".format(self.name))
+            if opt == ('Y'):
+                opt = input("This option can't be undone. Are you really sure? (Y/n)")
+                if opt == ('Y'):
+                    print("OK! Deleting the scheme, pages and any related files")
+                    self.load_scheme()
+                    addr = self.sch['locations']['address']+os.sep+self.name+ADDR_EXT
+                    print("Deleting address file")
+                    os.remove(addr)
+                    table = self.sch['locations']['table']+os.sep+self.name
+                    print('Deleting pages')
+                    for f in os.listdir(table):
+                        if f.endswith(TBL_EXT):
+                            print("Deleting page {}".format(f))
+                            os.remove(f)
+                    print('Deleting table folder {}'.format(table))
+                    os.rmdir(table)
+                    print('All scheme files were deleted')
+                    done = True
+                else:
+                    print("The options are 'Y' or 'n'. Care the case, please")
+            elif opt == ('n'):
+                print ("You choose NO. No files were touched")
+                done = True
+            else:
+                print("The options are 'Y' or 'n'. Care the case, please")
     
     def create (self,type_defs,max_values={},locations={}): # max_values is a dict
         self.sch = dict()
@@ -49,7 +79,7 @@ class Scheme:
         self.sch['max_values'] = maxes
         self.sch['locations'] = locations
         if not 'table' in locations:
-            self.sch['locations']['table'] = TABLES+os.sep+self.name
+            self.sch['locations']['table'] = TABLES
         if not 'address' in locations:
             self.sch['locations']['address'] = TABLES+os.sep+self.name
         

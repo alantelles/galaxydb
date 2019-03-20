@@ -16,5 +16,5 @@ locations = {
     'table':rt+'non-default-tables'
 }
 sch = Scheme('users')
-sch.create(tds,max_values,locations)
+sch.create(tds,max_values)
 sch.save()

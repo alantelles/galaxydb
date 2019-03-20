@@ -5,7 +5,7 @@ from struct import pack
 import datetime
 import time
 
-class Recorder:
+class Creator:
     def __init__(self,name,scheme):
         self.name = name
         #self.tables_path = TABLES+os.sep+self.name

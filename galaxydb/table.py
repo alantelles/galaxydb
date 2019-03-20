@@ -1,7 +1,7 @@
 import json
 import os
 from .scheme import Scheme
-from .low_level.recorder import Recorder
+from .low_level.recorder import Creator
 from .low_level.retriever import Retriever
 from .logic import Logic
 from .constants import *
@@ -37,8 +37,9 @@ class Table():
             ret = []
             for i in self.data:
                 ret.append(Namespace(**i))
-            self.data = ret
-        return self.data
+            self.data = None
+            self.found_ids = []
+        return ret
 
 # free conditional return methods    
     def where(self,logic):
@@ -51,6 +52,8 @@ class Table():
         return self
         
     def filter (self,logic):
+        self.data = []
+        self.found_ids = []
         if isinstance(logic,tuple):
             x = logic
             logic = ['or']
@@ -66,6 +69,8 @@ class Table():
         r = Retriever(self.name,self.scheme)
         ret = r.find_records_by_field_sequential(rel,*conds)
         if rel == 'and' and len(self.found_ids) > 0:
+            res = []
+            res_reg = []
             for i in range(len(ret[1])):
                 if ret[1][i] in self.found_ids:
                     res.append(ret[1][i])
@@ -92,12 +97,12 @@ class Table():
         k = r.find_record_by_id(val)
         r.close_retriever()
         if not k == None:
-            self.data = k
-            self.found_ids = k['id']
+            self.data = None
+            self.found_ids = []
             if (as_namespace):
-                return Namespace(**self.data)
+                return Namespace(**k)
             else:
-                return self.data
+                return k
         else:
             return None
         
@@ -124,27 +129,30 @@ class Table():
                 k.append(Namespace(**i))
             else:
                 k.append(i)
-        self.data = k
-        return self.data
+        self.data = None
+        return k
         
     def first(self,as_namespace = RET_AS_NAMESPACE):
+        k = self.data
+        self.data = None
         if (as_namespace):
-            return Namespace(**self.data[0])
+            return Namespace(**k[0])
         else:
-            return self.data[0]
+            return k[0]
     
     def limit(self,first,length=0,as_namespace = RET_AS_NAMESPACE):
         if length != 0:
-            k = self.data[first:first+length]
+            self.data = self.data[first:first+length]
         else:
-            k = self.data[first:]
-        self.data = []
-        for i in k:
+            self.data = self.data[first:]
+        k = []
+        for i in self.data:
             if (as_namespace):
-                self.data.append(Namespace(**i))
+                k.append(Namespace(**i))
             else:
-                self.data.append(i)
-        return self.data
+                k.append(i)
+        self.data = None
+        return k
 
 #insert methods    
     def insert_by_tuple(self,fields,values):
@@ -158,7 +166,7 @@ class Table():
         self.insert(*lt)
         
     def insert(self,*items):
-        r = Recorder(self.name,self.scheme)
+        r = Creator(self.name,self.scheme)
         for item in items:
             r.new_record()
             for sch_col in self.scheme['columns']:
