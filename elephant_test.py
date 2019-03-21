@@ -14,8 +14,8 @@ u = User()
 #y = u.all()
 #print_list(y)
 #x = u.login('alantelles','zikazika')
-x = u.filter(Logic().like('name','i')).order('name','password').get()
-print_list(x)
+#x = u.login('alantelles','zikazika')
+#print_row(x)
 
 #s = Scheme('users')
 #s.delete_scheme()
@@ -32,7 +32,7 @@ regs = [
     ('Philipe Pinheiro','philipe','phrp'),
     ('Heber Passos','hebinho','1000lchopp')
 ]
-#u.insert_by_tuple(fields,regs)
+u.insert_by_tuple(fields,regs)
 #u.insert({'name':'Marina Pereira','username':'marina2'})
 en=time.time()
 print('Benchmark:',en-st)

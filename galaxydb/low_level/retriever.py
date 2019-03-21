@@ -148,6 +148,7 @@ class Retriever:
         return (ret,ids)
     
     def find_record_by_id(self,id):
+        
         self.addr.seek(0)
         maxes = self.scheme['max_values']
         id_byte = to_bytes_e(id,maxes['max_regs'])

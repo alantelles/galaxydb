@@ -131,13 +131,15 @@ class Creator:
     def commit(self):
         self.get_auto_inc()
         self.addr.seek(-2,2)
-        adf = RECORD #2
-        adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
+        #adf = RECORD #2
+        #adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
         self.f.seek(0,2) # points to end of file
+        adf = b''
         pos_rec=to_bytes_e(self.f.tell(),self.maxes['max_page_size'])
         for i,j in enumerate(self.rec_buffer):
             adf += FIELD
             adf += to_bytes_e(self.c_ids[i],self.maxes['max_cols']) #self.maxes['max_cols'] column_id
+            adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
             adf += self.page #self.maxes['max_pages'] page
             adf += pos_rec #self.maxes['max_page_size'] address in a page
             adf += self.lengths[i]
