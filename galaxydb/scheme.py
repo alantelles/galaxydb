@@ -96,8 +96,10 @@ class Scheme:
     #alter methods
     
     def alter(self,group,param,new):
-        if group == 'locations':
+        if group == 'location':
             self.alter_location(param,new)
+        elif group == 'column':
+            self.alter_column(param,new)
         pass
     
     def alter_location(self,param,new):
@@ -105,13 +107,26 @@ class Scheme:
         if new.find('file://') == 0:
             new = new[len('file://'),:]
         self.sch['locations'][param] = new
-        self.save_scheme()
+        self.save_scheme(True)
         
-    def alter_column(self,column,param,new):
-        if param == 'col_id':
-            raise Exception "You can't alter 'col_id' parameter since it's a core of data storage. Do this will break all your database"
+    def alter_column(self,column,new):
+        if column == 'id':
+            raise Exception ("You can't alter 'id' field. It's a core of data storage and can't be changed. Do this will break all your database")
         self.load_scheme()
-        self.sch['columns']
+        if 'name' in new and new['name'] == 'id':
+            print("You can't name other field as 'id'. This modification was dropped from list.")
+            del new['name']
+        if 'col_id' in new:
+            print("You can't change 'col_id' parameter. It's a core of data storage and do this will break your database. This modification was dropped from list.")
+            del new['col_id']
+        for i in self.sch['columns']:
+            if column == i['name']:
+                for j,k in new.items():
+                    i[j] = k
+                    self.save_scheme(True)
+                break
+        else:
+            print("Column {} doesn't exist in scheme {}".format(column,self.name))
     
     #end alter methods
         

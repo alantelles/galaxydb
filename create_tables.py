@@ -16,5 +16,6 @@ locations = {
     'table':rt+'non-default-tables'
 }
 sch = Scheme('users')
-sch.create(tds,max_values)
-sch.save(True)
+sch.alter('column','contrasenha',{'name':'password'})
+#sch.create(tds,max_values)
+#sch.save(True)
