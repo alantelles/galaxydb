@@ -26,11 +26,13 @@ class Table():
         r.close_retriever()
         return ret
         
-    def all(self,columns=[],as_namespace = RET_AS_NAMESPACE):
+    def all(self,columns=[],order_rule=(),as_namespace = RET_AS_NAMESPACE):
         self.data = []
         r = Retriever(self.name,self.scheme)
         ret = r.find_all(columns)
         self.data = ret[0]
+        if len(order_rule) > 0:
+            self.order(*order_rule)
         self.found_ids = ret[1]
         r.close_retriever()
         if (as_namespace):
