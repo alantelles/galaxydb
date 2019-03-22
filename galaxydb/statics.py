@@ -51,7 +51,7 @@ def read_until (f,seq,start_pos=None,none_not_found = True):
             return None
         else:
             f.seek(where)
-            r = f.read(64*2014)
+            r = f.read(64*1024)
             while r:
                 r += f.read(64*1024)
             return r

@@ -11,6 +11,10 @@ def print_list(c):
 
 st=time.time()
 u = User()
+m = u.filter(Logic().like('name','Regina','x..')).get()
+print_list(m)
+print()
+print_list(u.all())
 #y = u.all()
 #print_list(y)
 #x = u.login('alantelles','zikazika')
@@ -32,7 +36,7 @@ regs = [
     ('Philipe Pinheiro','philipe','phrp'),
     ('Heber Passos','hebinho','1000lchopp')
 ]
-u.insert_by_tuple(fields,regs)
+#u.insert_by_tuple(fields,regs)
 #u.insert({'name':'Marina Pereira','username':'marina2'})
 en=time.time()
 print('Benchmark:',en-st)

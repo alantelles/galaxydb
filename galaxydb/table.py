@@ -26,10 +26,10 @@ class Table():
         r.close_retriever()
         return ret
         
-    def all(self,as_namespace = RET_AS_NAMESPACE):
+    def all(self,columns=[],as_namespace = RET_AS_NAMESPACE):
         self.data = []
         r = Retriever(self.name,self.scheme)
-        ret = r.find_all()
+        ret = r.find_all(columns)
         self.data = ret[0]
         self.found_ids = ret[1]
         r.close_retriever()
@@ -42,16 +42,17 @@ class Table():
         return ret
 
 # free conditional return methods    
-    def where(self,logic):
-        r = Retriever(self.name,self.scheme)
-        c = self.get_code_by_field(logic[0])
-        ret = r.find_records_by_field(logic[2],c,logic[1])
-        self.data = ret[0]
-        self.found_ids = ret[1]
-        r.close_retriever()
-        return self
+
+#    def where(self,logic):
+#    r = Retriever(self.name,self.scheme)
+#        c = self.get_code_by_field(logic[0])
+#        ret = r.find_records_by_field(logic[2],c,logic[1])
+#        self.data = ret[0]
+#        self.found_ids = ret[1]
+#        r.close_retriever()
+#        return self
         
-    def filter (self,logic):
+    def filter (self,logic,columns=[]):
         self.data = []
         self.found_ids = []
         if isinstance(logic,tuple):
@@ -67,7 +68,7 @@ class Table():
             else:
                 tests[i[0]] = {'oper':i[1],'val':i[2]}
         r = Retriever(self.name,self.scheme)
-        ret = r.find_records_by_field_sequential(rel,*conds)
+        ret = r.find_records_by_field_sequential(columns,rel,*conds)
         if rel == 'and' and len(self.found_ids) > 0:
             res = []
             res_reg = []
@@ -83,18 +84,21 @@ class Table():
         r.close_retriever()
         return self
         
-    def logic(self,*cond):
-        r = Retriever(self.name,self.scheme)
-        ret = r.find_records_by_field_sequential(cond[0],*cond[1:])
-        self.data = ret[0]
-        self.found_ids = ret[1]
-        r.close_retriever()
-        return self
+#    def logic(self,*cond):
+#        r = Retriever(self.name,self.scheme)
+#        ret = r.find_records_by_field_sequential(cond[0],*cond[1:])
+#        self.data = ret[0]
+#        self.found_ids = ret[1]
+#        r.close_retriever()
+#        return self
         
 # strictly built logic conditional methods            
-    def find(self,val,as_namespace=RET_AS_NAMESPACE):
+    def find(self,val,columns=[],as_namespace=RET_AS_NAMESPACE):
+        #val is any
+        #columns is a list
+        #as_namespace is a bool
         r = Retriever(self.name,self.scheme)
-        k = r.find_record_by_id(val)
+        k = r.find_record_by_id(val,columns)
         r.close_retriever()
         if not k == None:
             self.data = None
@@ -106,14 +110,14 @@ class Table():
         else:
             return None
         
-    def column_equals(self,field,val):
-        self.data = []
-        r = Retriever(self.name,self.scheme)
-        ret = r.find_records_by_field(val,self.get_code_by_field(field),'=')
-        self.data = ret[0]
-        self.found_ids = ret[1]
-        r.close_retriever()
-        return self
+#    def column_equals(self,field,val):
+#        self.data = []
+#        r = Retriever(self.name,self.scheme)
+#        ret = r.find_records_by_field(val,self.get_code_by_field(field),'=')
+#        self.data = ret[0]
+#        self.found_ids = ret[1]
+#        r.close_retriever()
+#        return self
 
 # auxiliary methods            
     def get_code_by_field (self,field):

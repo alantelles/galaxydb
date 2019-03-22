@@ -5,6 +5,9 @@ class Logic:
     def eq(self,field,val):
         return (field,'=',val)
     
+    def all(self):
+        return ALL
+    
     def not_eq(self,field,val):
         return (field,'!=',val)
     

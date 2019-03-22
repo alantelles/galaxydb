@@ -4,6 +4,7 @@ from struct import unpack,pack
 from datetime import datetime
 import time
 import os
+import re
 class Retriever:
     def __init__(self,name,scheme):
         self.name = name
@@ -28,74 +29,55 @@ class Retriever:
         self.files[page_needed].seek(addr)
         return self.files[page_needed].read(length)
     
-    def find_records_by_field_sequential (self,logic,*field_relation_val_tuples):
+    def find_records_by_field_sequential (self,columns,logic,*field_relation_val_tuples):
+        # working for new address model
         self.addr.seek(0)
         ids = []
-        fields = []
-        opers = []
-        vals = []
         found = []
+        tests = []
+        data = []
+        found_ids = []
         for i in field_relation_val_tuples:
-            fields.append(self.get_code_by_field(i[0]))
-            opers.append(i[1])
-            vals.append(i[2])
-        r = self.addr.read(BUF)
-        r = r + read_until(self.addr,RECORD,None,False)
-        max_cols = self.scheme['max_values']['max_cols']
+            tests.append({'field':i[0],'oper':i[1],'val':i[2]})
+        max_regs = self.scheme['max_values']['max_regs']
         max_pages = self.scheme['max_values']['max_pages']
         max_page_size = self.scheme['max_values']['max_page_size']
+        max_cols = self.scheme['max_values']['max_cols']
+        self.addr.seek(0)
+        r = self.addr.read(BUF)
+        offset = 0
+        id_ptn = b''
+        for i in range(max_regs):
+            id_ptn += b'[\x00-\xFF]'
         while r:
-            recs = r.split(RECORD)[1:]
-            for i in recs:
-                id = from_bytes_e(i[:max_cols])
-                cols = i.split(FIELD)[1:]
-                for j in cols:
-                    code = j[0:max_cols]
-                    if from_bytes_e(code) in fields:
-                        page = from_bytes_e(j[max_cols:max_cols+max_pages])
-                        addr = from_bytes_e(j[max_cols+max_pages:max_cols+max_pages+max_page_size])
-                        length = from_bytes_e(j[max_cols+max_pages+max_page_size:])
-                        data = self.find_data_by_addr(page,addr,length)
-                        found.append({'code':code,'data':data,'id':id})
+            ids.extend(re.findall(FIELD+to_bytes_e(0,max_cols)+id_ptn,r))
             r = self.addr.read(BUF)
-            r = r + read_until(self.addr,RECORD,None,False)
-        cons = {}
-        for i in found:
-            if not i['id'] in cons:
-                cons[i['id']] = []
-            cons[i['id']].append({from_bytes_e(i['code']):i['data']})
-        found = []
-        for i,j in cons.items():
-            len_f = len(fields)
-            match = False
-            for k in range(len_f):
-                for l in j:
-                    if fields[k] in l:
-                        # tests
-                        data = l[fields[k]]
-                        val_b = self.byte_val(vals[k],fields[k])
-                        comp = opers[k]
-                        test = logic_oper(comp,data,val_b)
-                        if test:
-                            match = True
-                            if logic == 'or':
-                                break
-                        else:
-                            match = False
-                            if logic == 'and':
-                                break
-                            
+        ids = [from_bytes_e(x[len(FIELD)+max_cols:]) for x in ids]
+        for i in ids:
+            cand = self.find_record_by_id(i)
+            if logic == 'and':
+                can_add = True
+            elif logic == 'or':
+                can_add = False
+            for t in tests:
+                match = logic_oper(t['oper'],cand[t['field']],t['val'])
                 if logic == 'and' and not match:
+                    can_add = False
                     break
                 if logic == 'or' and match:
+                    can_add = True
                     break
-            if match:
-                ids.append(i)
-                found.append(self.find_record_by_id(i))
-        return (found,ids)
-        
-    def filter_results(self):
-        pass
+            if can_add:
+                if len(columns) > 0:
+                    a_reg = {}
+                    for key,value in cand.items():
+                        if key in columns:
+                            a_reg[key] = value
+                    data.append(a_reg)
+                else:
+                    data.append(cand)
+                    found_ids.append(i)
+        return (data,found_ids)
         
     def find_records_by_field(self,val,field,comp):
         self.addr.seek(0)
@@ -146,59 +128,101 @@ class Retriever:
             a = self.addr.read(BUF)
             stp = self.addr.tell()
         return (ret,ids)
-    
-    def find_record_by_id(self,id):
-        
-        self.addr.seek(0)
-        maxes = self.scheme['max_values']
-        id_byte = to_bytes_e(id,maxes['max_regs'])
-        target = RECORD + id_byte
-        pos = seek_until(self.addr,target)[0]
-        if pos == -1:
-            return None
+
+    def find_record_by_id(self,id,columns = []):
+        # working for new address model
         data = {}
-        self.addr.seek(len(target),1)
-        num_cols = len(self.scheme['columns'])
-        for i in range(num_cols):
-            self.addr.seek(len(FIELD),1)
-            code = from_bytes_e(self.addr.read(maxes['max_cols']))
-            page = from_bytes_e(self.addr.read(maxes['max_pages']))
-            addr = from_bytes_e(self.addr.read(maxes['max_page_size']))
-            if i < num_cols-1:
-                length = from_bytes_e(read_until(self.addr,FIELD))
-            else:
-                r = read_until(self.addr,RECORD)
-                if not r == None:
-                    length = from_bytes_e(r)
-                else:
-                    length = from_bytes_e(read_until(self.addr,FILE_END))
-            data[self.scheme['columns'][i]['name']] = self.conform_val(self.find_data_by_addr(page,addr,length),code)
-        return data
-    
-    def find_all(self):
-        ret = []
-        ids = []
-        for i in find_all_seq(self.addr,RECORD):
-            self.addr.seek(i+2)
-            an_id = from_bytes_e(self.addr.read(self.scheme['max_values']['max_regs']))
-            ret.append(self.find_record_by_id(an_id))
-            ids.append(an_id)
-        return (ret,ids)
-        
-    def count_all(self):
         self.addr.seek(0)
-        f = self.addr.read(64*1024)
-        f147 = 0
-        founds = 0
-        while f:
-            for i in f:
-                if i == 147:
-                    f147 += 1
-                if f147 == 2:
-                    f147 = 0
-                    founds += 1
-            f = self.addr.read(64*1024)
-        return founds
+        max_regs = self.scheme['max_values']['max_regs']
+        max_pages = self.scheme['max_values']['max_pages']
+        max_page_size = self.scheme['max_values']['max_page_size']
+        max_cols = self.scheme['max_values']['max_cols']
+        id_b = to_bytes_e(id,max_regs)
+        r = self.addr.read(BUF)
+        offset = 0
+        ret_cols = []
+        if len(columns) > 0:
+            for i in self.scheme['columns']:
+                if i['name'] in columns:
+                    ret_cols.append((to_bytes_e(i['col_id'],max_cols),i['name']))
+        else:
+            for i in self.scheme['columns']:
+                ret_cols.append((to_bytes_e(i['col_id'],max_cols),i['name']))
+        while r:
+            if r.find(FIELD+b'\x00'+id_b) < 0:
+                return None
+            if len(r) == BUF:
+                r += read_until(self.addr.read,FIELD)
+            for i in ret_cols:
+                pos = r.find(FIELD+i[0]+id_b)
+                pos += len(FIELD+i[0]+id_b)
+                temp = b''
+                for j in range(pos,pos+max_pages):
+                    temp += to_bytes_e(r[j],1)
+                    pos += 1
+                page = from_bytes_e(temp)
+                temp = b''
+                for j in range(pos,pos+max_page_size):
+                    temp += to_bytes_e(r[j],1)
+                    pos += 1
+                addr = from_bytes_e(temp)
+                temp = b''
+                for j in range(pos,pos+len(r)):
+                    temp += to_bytes_e(r[j],1)
+                    pos += 1
+                    next_f = b''
+                    for k in range(pos,pos+len(FIELD)):
+                        next_f += to_bytes_e(r[k],1)
+                    if next_f == FIELD or next_f == FILE_END:
+                        length = from_bytes_e(temp)
+                        break
+                data[i[1]] = self.conform_val(self.find_data_by_addr(page,addr,length),from_bytes_e(i[0]))
+            r = self.addr.read(BUF)
+            offset = len(r)
+        return data
+                
+    def find_all(self,columns=[]):
+        # working for new address model
+        data = []
+        found_ids = []
+        ids = []
+        self.addr.seek(0)
+        max_regs = self.scheme['max_values']['max_regs']
+        max_pages = self.scheme['max_values']['max_pages']
+        max_page_size = self.scheme['max_values']['max_page_size']
+        max_cols = self.scheme['max_values']['max_cols']
+        r = self.addr.read(BUF)
+        offset = 0
+        id_ptn = b''
+        for i in range(max_regs):
+            id_ptn += b'[\x00-\xFF]'
+        while r:
+            ids.extend(re.findall(FIELD+to_bytes_e(0,max_cols)+id_ptn,r))
+            r = self.addr.read(BUF)
+        for i in ids:
+            id = from_bytes_e(i[len(FIELD)+max_cols:])
+            data.append(self.find_record_by_id(id,columns))
+            found_ids.append(id)
+        return (data,found_ids)
+            
+    def count_all(self):
+        # working for new address model
+        data = []
+        found_ids = []
+        self.addr.seek(0)
+        max_regs = self.scheme['max_values']['max_regs']
+        max_pages = self.scheme['max_values']['max_pages']
+        max_page_size = self.scheme['max_values']['max_page_size']
+        max_cols = self.scheme['max_values']['max_cols']
+        r = self.addr.read(BUF)
+        offset = 0
+        id_ptn = b''
+        for i in range(max_regs):
+            id_ptn += b'[\x00-\xFF]'
+        while r:
+            ids = re.findall(FIELD+to_bytes_e(0,max_cols)+id_ptn,r)
+            r = self.addr.read(BUF)
+        return len(ids)
                         
     def byte_val(self,val,field):
         t = self.scheme['columns'][field]['type']
