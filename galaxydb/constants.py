@@ -11,6 +11,8 @@ INT, STR, VARI, NULL, DEFAULT, BOOL, FLOAT, DOUBLE ='INT', 'STR', 'VARI', 'NULL'
 DATE, DATETIME, TIME = 'DATE', 'DATETIME', 'TIME'
 
 BUF = 64*1024
+
+#aliases
 ASC, DESC = False,True
 
 #column modifiers
@@ -31,6 +33,7 @@ MAX_DEFAULT = {'max_regs':MAX_REGS, 'max_pages':MAX_PAGES, 'max_page_size':MAX_P
 
 SCHEMES = ROOT+'schemes' #folder to save the schemes files
 TABLES = ROOT+'tables' #default folder to tables
+
 # others
 RET_AS_NAMESPACE = True
 

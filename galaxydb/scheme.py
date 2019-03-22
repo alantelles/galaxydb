@@ -66,7 +66,7 @@ class Scheme:
         
         maxes = {}
         for i,j in enumerate(type_defs):
-            j.params['name'] = j.name
+            j.params['name'] = j.name.strip()
             j.params['col_id'] = len(columns)
             columns.append(j.params)
         for i,j in MAX_DEFAULT.items():
@@ -93,7 +93,29 @@ class Scheme:
                 out+='    '+k+': '+str(l)+'\n'
         return out
         
-    def save(self,log=False):
+    #alter methods
+    
+    def alter(self,group,param,new):
+        if group == 'locations':
+            self.alter_location(param,new)
+        pass
+    
+    def alter_location(self,param,new):
+        self.load_scheme()
+        if new.find('file://') == 0:
+            new = new[len('file://'),:]
+        self.sch['locations'][param] = new
+        self.save_scheme()
+        
+    def alter_column(self,column,param,new):
+        if param == 'col_id':
+            raise Exception "You can't alter 'col_id' parameter since it's a core of data storage. Do this will break all your database"
+        self.load_scheme()
+        self.sch['columns']
+    
+    #end alter methods
+        
+    def save_scheme(self,log=False):
         if log:
             print('Saving scheme "{}"'.format(self.name))
         with open(self.sch_path,'wt') as f:
@@ -106,5 +128,5 @@ class Scheme:
                 parsed = json.load(f)
                 print(json.dumps(parsed,indent=4,sort_keys=True))
         for i,j in self.sch['locations'].items():
-            if not os.path.exists(j):
+            if not os.path.isdir(j):
                 os.mkdir(j)
