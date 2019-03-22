@@ -3,6 +3,7 @@ import os
 from .scheme import Scheme
 from .low_level.recorder import Creator
 from .low_level.retriever import Retriever
+from .low_level.deleter import Deleter
 from .logic import Logic
 from .constants import *
 from .statics import *
@@ -159,6 +160,13 @@ class Table():
                 k.append(i)
         self.data = None
         return k
+
+#delete methods
+    def delete(self,logic):
+        self.filter(logic)
+        d = Deleter(self.name,self.scheme)
+        for i in self.found_ids:
+            d.delete_by_id(i)
 
 #insert methods    
     def insert_by_tuple(self,fields,values):
