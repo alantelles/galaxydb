@@ -129,6 +129,8 @@ class Scheme:
             print("Column {} doesn't exist in scheme {}".format(column,self.name))
     
     #end alter methods
+    def save(self,log=False):
+        self.save_scheme(log)
         
     def save_scheme(self,log=False):
         if log:

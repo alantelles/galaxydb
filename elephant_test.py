@@ -12,20 +12,6 @@ def print_list(c):
 st=time.time()
 u = User()
 l = Logic()
-log = l.logic_or(l.like('name','Regina','x..'),l.like('username','keli','x..'))
-heber = l.like('name','Heber','x..')
-id = l.eq('id',19)
-u.delete(id)
-print(u.filter(heber).get())
-#y = u.all()
-#print_list(y)
-#x = u.login('alantelles','zikazika')
-#x = u.login('alantelles','zikazika')
-#print_row(x)
-
-#s = Scheme('users')
-#s.delete_scheme()
-
 #recorder test
 fields = ('name','username','password')
 regs = [
