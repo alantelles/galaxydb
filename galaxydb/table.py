@@ -167,6 +167,7 @@ class Table():
         d = Deleter(self.name,self.scheme)
         for i in self.found_ids:
             d.delete_by_id(i)
+        d.close_deleter()
 
 #insert methods    
     def insert_by_tuple(self,fields,values):
@@ -210,3 +211,7 @@ class Table():
         self.data = newlist
         return self
         ## some order algorithm
+    
+    def zika(self):
+        d = Deleter(self.name,self.scheme)
+        d.close_deleter()

@@ -12,6 +12,8 @@ def print_list(c):
 st=time.time()
 u = User()
 l = Logic()
+print_list(u.all())
+#u.delete(l.eq('id',9))
 #recorder test
 fields = ('name','username','password')
 regs = [

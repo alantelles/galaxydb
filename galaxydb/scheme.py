@@ -84,6 +84,8 @@ class Scheme:
             self.sch['locations']['table'] = TABLES
         if not 'address' in locations:
             self.sch['locations']['address'] = TABLES+os.sep+self.name
+        if not 'trash' in locations:
+            self.sch['locations']['trash'] = TABLES+os.sep+self.name
         
     def __str__(self):
         out='Scheme: {}\n'.format(self.name)

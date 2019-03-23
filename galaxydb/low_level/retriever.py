@@ -78,56 +78,6 @@ class Retriever:
                     data.append(cand)
                     found_ids.append(i)
         return (data,found_ids)
-        
-    def find_records_by_field(self,val,field,comp):
-        self.addr.seek(0)
-        maxes = self.scheme['max_values']
-        val_b = self.byte_val(val,field)
-        f_b = to_bytes_e(field,maxes['max_cols'])
-        a = self.addr.read(BUF)
-        pos = last = -1
-        stp = 0
-        ret = []
-        ids = []
-        while a:
-            pos = a.find(FIELD+f_b,stp+last+1)
-            while pos > -1:
-                st = pos+len(FIELD)+len(f_b)
-                page = a[st:st+maxes['max_pages']]
-                page = from_bytes_e(page)
-                st = st+maxes['max_pages']
-                addr = a[st:st+maxes['max_page_size']]
-                addr = from_bytes_e(addr)
-                next_f = a.find(FIELD,pos+1)
-                if next_f == -1: # last col
-                    next_f = a.find(RECORD,pos+1)
-                    if next_f == -1:
-                        next_f = a.find(FILE_END,pos+1)
-                length = a[st+maxes['max_page_size']:next_f]
-                length = from_bytes_e(length)
-                data = self.find_data_by_addr(page,addr,length)
-                # tests
-                test = logic_oper(comp,data,val_b)
-                # end tests
-                if test:
-                    for i in range(pos,last,-1):
-                        test = b''
-                        for temp in range(len(RECORD)):
-                            test += to_bytes_e(a[temp+i],0)
-                        #test = to_bytes_e(a[i],0)+to_bytes_e(a[i+1],0)
-                        if test == RECORD:
-                            id = []
-                            for temp in range(maxes['max_regs']):
-                                id.append(a[temp+len(RECORD)+i])
-                            id = from_bytes_e(bytes(id))
-                            ids.append(id)
-                            ret.append(self.find_record_by_id(id))
-                            break
-                last = pos
-                pos = a.find(FIELD+f_b,stp+last+1)
-            a = self.addr.read(BUF)
-            stp = self.addr.tell()
-        return (ret,ids)
 
     def find_record_by_id(self,id,columns = []):
         # working for new address model

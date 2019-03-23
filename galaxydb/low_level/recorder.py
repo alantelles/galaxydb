@@ -41,6 +41,9 @@ class Creator:
             self.f = open(page,'wb')
             self.addr = open(self.address_path,'wb')
             self.addr.write(FILE_END)
+        trash_path = self.scheme['locations']['trash']+os.sep+self.name+TRASH_EXT
+        if os.path.isfile(trash_path):
+            trash = open(trash_path,'rb+')
         self.get_auto_inc()
         self.page = int(page_num)
         self.page = to_bytes_e(self.page,self.maxes['max_pages'])
@@ -133,6 +136,9 @@ class Creator:
         self.addr.seek(-2,2)
         #adf = RECORD #2
         #adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
+        ##### TODO
+        ##### witchy analysis to get a free space on address file
+        ##### it'll be hard
         self.f.seek(0,2) # points to end of file
         adf = b''
         pos_rec=to_bytes_e(self.f.tell(),self.maxes['max_page_size'])
@@ -141,10 +147,15 @@ class Creator:
             adf += to_bytes_e(self.c_ids[i],self.maxes['max_cols']) #self.maxes['max_cols'] column_id
             adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
             adf += self.page #self.maxes['max_pages'] page
+            ##### TODO
+            ##### pos_rec needs to be calculated
             adf += pos_rec #self.maxes['max_page_size'] address in a page
             adf += self.lengths[i]
             self.addr.write(adf)
             adf = b''
+            ##### TODO
+            ##### open the the indicated page
+            ##### goto to indicated address
             self.f.write(j)
             pos_rec=to_bytes_e(self.f.tell(),self.maxes['max_page_size'])
         self.addr.write(FILE_END)

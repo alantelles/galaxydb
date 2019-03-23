@@ -8,14 +8,19 @@ class Deleter:
         self.scheme = scheme
         addr_path = self.scheme['locations']['address']+os.sep+self.name+ADDR_EXT
         self.addr = open(addr_path,'rb+')
+        trash_path = self.scheme['locations']['trash']+os.sep+self.name+TRASH_EXT
+        if os.path.isfile(trash_path):
+            self.trash = open(trash_path,'rb+')
+        else:
+            self.trash = open(trash_path,'wb')
         
-        pass
     def delete_by_id(self,id):
         max_cols = self.scheme['max_values']['max_cols']
         max_regs = self.scheme['max_values']['max_regs']
         max_pages = self.scheme['max_values']['max_pages']
         max_page_size = self.scheme['max_values']['max_page_size']
         self.addr.seek(0)
+        self.trash.seek(0,2)
         k = self.addr.read(BUF)
         if len(k) == BUF:
             k = read_until(self.addr.read,FIELD)
@@ -35,6 +40,10 @@ class Deleter:
                     trash = FIELD
                     trash += to_bytes_e(2**(8*max_cols)-1,max_cols)
                     self.addr.seek(pos_field)
+                    trash_mark = TRASH+to_bytes_e(pos_field,0)+VALUE+to_bytes_e(len(sub_bytes),0)
+                    self.trash.write(trash_mark)
+                    # records the address and length of a deleted register in address file
+                    #self.addr.seek(len(trash),1) #teste
                     self.addr.write(trash)
                 offset = pos_field+len(FIELD)
                 pos_field = k.find(FIELD,offset)
@@ -42,3 +51,6 @@ class Deleter:
             k = self.addr.read(BUF)
             where = self.addr.tell()
         pass
+    
+    def close_deleter(self):
+        self.trash.close()
