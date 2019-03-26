@@ -8,3 +8,8 @@ Basic order implement, only one direction for all parameters possible
 2019-03-23
 
 Implementing trash file
+
+2019-03-26
+
+Implementing delete
+Implementing Update

@@ -136,11 +136,13 @@ class Creator:
         r = self.addr_trash.read(BUF)
         offset = 0
         trash_addr = 0
+        trash_len = 0
         while r:
-            r = [x for x in r if not x == b'\xFF']
             offset += len(r)
             trashes = r.split(TRASH)[1:]
             for t in trashes:
+                if t == b'\xFF':
+                    continue
                 trash_len = len(t)
                 addr,leng = t.split(VALUE)
                 addr_int = from_bytes_e(addr)
@@ -154,12 +156,14 @@ class Creator:
                     #can save here
                     return {'addr':addr_int,'trash_addr':to_bytes_e(trash_addr),'trash_len':to_bytes_e(trash_len)}
                 trash_addr += len(t)
-            r.seek(offset)
+            self.addr_trash.seek(offset)
             r = self.addr_trash.read(BUF)
         return None
     
     def clean_trash (self,f,pos,length):
-        to_write = [b'xFF' for x in bytes(length)]
+        to_write = b''
+        for x in bytes(length):
+            to_write += b'\xFF'
         f.seek(pos)
         f.write(to_write)
     
@@ -173,24 +177,25 @@ class Creator:
         offset = 0
         trash_addr = 0
         while r:
-            r = [x for x in r if not x == b'\xFF']
             offset += len(r)
             trashes = r.split(TRASH)[1:]
             for t in trashes:
+                if t.find(FIELD_END) < 0:
+                    continue
                 page = t[:max_pages]
                 addr = t[max_pages:max_pages+max_cols]
-                len_avail = t[max_pages+max_cols:]
+                len_avail = t[max_pages+max_cols:t.find(FIELD_END)]
                 if from_bytes_e(len_avail) >= length:
                     #can save here
                     return {
                         'addr':from_bytes_e(addr),
                         'page':from_bytes_e(page),
                         'length':from_bytes_e(len_avail),
-                        'trash_addr':from_bytes_e(trash_addr),
-                        'trash_len':to_bytes_e(trash_len)
+                        'trash_addr':trash_addr,
+                        'trash_len':to_bytes_e(trash_addr)
                     }
                 trash_addr += len(t)
-            r.seek(offset)
+            self.data_trash.seek(offset)
             r = self.data_trash.read(BUF)
         return None
         
@@ -252,7 +257,8 @@ class Creator:
             ##### goto to indicated address
             self.f.seek(pos_rec)
             self.f.write(j)
-            #self.clean_trash(self.data_trash,data_pos_rec['trash_addr'],data_pos_res['trash_len'])
+            if not data_pos_rec == None:
+                self.clean_trash(self.data_trash,data_pos_rec['trash_addr'],data_pos_rec['trash_len'])
         self.addr.seek(0,2)
         self.addr.write(FIELD)
         self.rec_buffer = []

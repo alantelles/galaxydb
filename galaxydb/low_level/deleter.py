@@ -40,7 +40,7 @@ class Deleter:
                 if from_bytes_e(id_b) == id:
                     end_field = k.find(FIELD,pos_field+len(FIELD))
                     if end_field == -1:
-                        end_field = k.find(FILE_END,pos_field+len(FIELD))
+                        end_field = k.find(FIELD_END,pos_field+len(FIELD))
                     sub_bytes = k[pos_field:end_field]
                     data_trash = {
                         'page':sub_bytes[len(FIELD)+max_cols+max_regs:len(FIELD)+max_cols+max_regs+max_pages],
@@ -52,7 +52,7 @@ class Deleter:
                     trash = FIELD
                     trash += to_bytes_e(2**(8*max_cols)-1,max_cols)
                     self.addr.seek(pos_field)
-                    trash_mark = TRASH+to_bytes_e(pos_field,0)+VALUE+to_bytes_e(len(sub_bytes),0)
+                    trash_mark = TRASH+to_bytes_e(pos_field,0)+VALUE+to_bytes_e(len(sub_bytes),0)+FIELD_END
                     self.addr_trash.write(trash_mark)
                     self.data_trash.write(data_trash_dump)
                     # records the address and length of a deleted register in address file

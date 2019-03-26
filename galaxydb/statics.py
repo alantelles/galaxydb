@@ -102,7 +102,7 @@ def logic_oper(comp,data,val_b):
     elif comp == 'LIKE%':
         test = data.find(val_b) == 0
     elif comp == '%LIKE':
-        test = data.find(val_b) == len(data)-1
+        test = data[-len(val_b):] == val_b
     elif comp == 'LIKE':
         test = data.find(val_b) > -1
     return test

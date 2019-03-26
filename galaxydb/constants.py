@@ -40,9 +40,10 @@ TABLES = ROOT+'tables' #default folder to tables
 RET_AS_NAMESPACE = True
 
 # canonical control bytes
-FIELD, VALUE, RECORD, TRASH, FIELD_END = 0x9191, 0x9292,0x9393, 0x9494, 0x9595
+FIELD, VALUE, RECORD, TRASH, FIELD_END, PERMA_TRASH = 0x9191, 0x9292,0x9393, 0x9494, 0x9595, 0x9696
 FIELD = to_bytes_e(FIELD)
 VALUE = to_bytes_e(VALUE)
 RECORD = to_bytes_e(RECORD)
 TRASH = to_bytes_e(TRASH)
 FIELD_END = to_bytes_e(FIELD_END)
+PERMA_TRASH = to_bytes_e(PERMA_TRASH)

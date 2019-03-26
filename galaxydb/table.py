@@ -212,6 +212,3 @@ class Table():
         return self
         ## some order algorithm
     
-    def zika(self):
-        d = Deleter(self.name,self.scheme)
-        d.close_deleter()
