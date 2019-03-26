@@ -10,6 +10,11 @@ def zeros_needed_fmt(num):
     zeros = str(num)
     return r"{:0"+str(len(zeros))+r"d}"
     
+def print_bytes(seq):
+    out = []
+    for i in seq:
+        out.append("{:02X}".format(i))
+    return out
 def to_bytes_e (num,size = 2):
     if size == 0:
         size = bytes_needed(num)

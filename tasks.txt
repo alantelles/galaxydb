@@ -4,3 +4,7 @@ Validating locations OK
 Working with inherited models OK
 Model heritage and selection children methods working OK
 Basic order implement, only one direction for all parameters possible
+
+2019-03-23
+
+Implementing trash file

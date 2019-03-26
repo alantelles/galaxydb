@@ -24,7 +24,8 @@ DUMP_EXT='.glxy'
 TBL_EXT='.gltb'
 SCH_EXT='.glsc'
 ADDR_EXT='.glad'
-TRASH_EXT='.gltr'
+ADDR_TRASH_EXT='.glat'
+DATA_TRASH_EXT='.gldt'
 
 MAX_COLS = 2 #max number of cols is 2^(8*MAX_COLS), default 65536 cols
 MAX_REGS = 2 #max number of registers in a table is 2^(8*MAX_REGS), default 65536 regs
@@ -39,9 +40,9 @@ TABLES = ROOT+'tables' #default folder to tables
 RET_AS_NAMESPACE = True
 
 # canonical control bytes
-FIELD, VALUE, RECORD, TRASH, FILE_END = 0x9191,0x9292,0x9393, 0x9494, 0x9595
+FIELD, VALUE, RECORD, TRASH, FIELD_END = 0x9191, 0x9292,0x9393, 0x9494, 0x9595
 FIELD = to_bytes_e(FIELD)
 VALUE = to_bytes_e(VALUE)
 RECORD = to_bytes_e(RECORD)
 TRASH = to_bytes_e(TRASH)
-FILE_END = to_bytes_e(FILE_END)
+FIELD_END = to_bytes_e(FIELD_END)

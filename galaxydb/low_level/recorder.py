@@ -19,6 +19,8 @@ class Creator:
         self.maxes = scheme['max_values']
         self.locations = scheme['locations']
         self.tables_path = self.locations['table']+os.sep+self.name
+        self.tb_prefix = self.tables_path+os.sep+self.name+'-'
+        self.files = {}
         if not os.path.exists(self.tables_path):
             os.mkdir(self.tables_path)
         self.address_path = self.locations['address']+os.sep+self.name+ADDR_EXT
@@ -40,10 +42,16 @@ class Creator:
             page = self.tables_path+os.sep+self.name+'-'+page_num+TBL_EXT
             self.f = open(page,'wb')
             self.addr = open(self.address_path,'wb')
-            self.addr.write(FILE_END)
-        trash_path = self.scheme['locations']['trash']+os.sep+self.name+TRASH_EXT
-        if os.path.isfile(trash_path):
-            trash = open(trash_path,'rb+')
+        addr_trash_path = self.locations['addr_trash']+os.sep+self.name+ADDR_TRASH_EXT
+        if os.path.isfile(addr_trash_path):
+            self.addr_trash = open(addr_trash_path,'rb+')
+        else:
+            self.addr_trash = open(addr_trash_path,'wb+')
+        data_trash_path = self.locations['data_trash']+os.sep+self.name+DATA_TRASH_EXT
+        if os.path.isfile(data_trash_path):
+            self.data_trash = open(data_trash_path,'rb+')
+        else:
+            self.data_trash = open(data_trash_path,'wb+')
         self.get_auto_inc()
         self.page = int(page_num)
         self.page = to_bytes_e(self.page,self.maxes['max_pages'])
@@ -114,8 +122,77 @@ class Creator:
     def write_bool(self,val,c_id):
         val = 1 if val == True else 0
         self.write_int(val,c_id)
+        
     def new_record(self):
         pass
+    
+    
+    def find_empty_addr(self,length):
+        max_regs = self.maxes['max_regs']
+        max_pages = self.maxes['max_pages']
+        max_page_size = self.maxes['max_page_size']
+        max_cols = self.maxes['max_cols']
+        self.addr_trash.seek(0)
+        r = self.addr_trash.read(BUF)
+        offset = 0
+        trash_addr = 0
+        while r:
+            r = [x for x in r if not x == b'\xFF']
+            offset += len(r)
+            trashes = r.split(TRASH)[1:]
+            for t in trashes:
+                trash_len = len(t)
+                addr,leng = t.split(VALUE)
+                addr_int = from_bytes_e(addr)
+                leng_int = from_bytes_e(leng)
+                self.addr.seek(addr_int)
+                seq = self.addr.read(leng_int)
+                len_avail = seq[len(FIELD)+max_cols+max_regs+max_pages+max_page_size:]
+                in_page = seq[len(FIELD)+max_cols+max_regs:len(FIELD)+max_cols+max_regs+max_pages]
+                in_addr = seq[len(FIELD)+max_cols+max_regs:len(FIELD)+max_cols+max_regs+max_pages]
+                if from_bytes_e(len_avail) == length:
+                    #can save here
+                    return {'addr':addr_int,'trash_addr':to_bytes_e(trash_addr),'trash_len':to_bytes_e(trash_len)}
+                trash_addr += len(t)
+            r.seek(offset)
+            r = self.addr_trash.read(BUF)
+        return None
+    
+    def clean_trash (self,f,pos,length):
+        to_write = [b'xFF' for x in bytes(length)]
+        f.seek(pos)
+        f.write(to_write)
+    
+    def find_empty_space(self,length):
+        max_regs = self.maxes['max_regs']
+        max_pages = self.maxes['max_pages']
+        max_page_size = self.maxes['max_page_size']
+        max_cols = self.maxes['max_cols']
+        self.data_trash.seek(0)
+        r = self.data_trash.read(BUF)
+        offset = 0
+        trash_addr = 0
+        while r:
+            r = [x for x in r if not x == b'\xFF']
+            offset += len(r)
+            trashes = r.split(TRASH)[1:]
+            for t in trashes:
+                page = t[:max_pages]
+                addr = t[max_pages:max_pages+max_cols]
+                len_avail = t[max_pages+max_cols:]
+                if from_bytes_e(len_avail) >= length:
+                    #can save here
+                    return {
+                        'addr':from_bytes_e(addr),
+                        'page':from_bytes_e(page),
+                        'length':from_bytes_e(len_avail),
+                        'trash_addr':from_bytes_e(trash_addr),
+                        'trash_len':to_bytes_e(trash_len)
+                    }
+                trash_addr += len(t)
+            r.seek(offset)
+            r = self.data_trash.read(BUF)
+        return None
         
     def is_new(self,id):
         adv = self.addr.tell()
@@ -133,36 +210,57 @@ class Creator:
             
     def commit(self):
         self.get_auto_inc()
-        self.addr.seek(-2,2)
+        #self.addr.seek(-2,2)
         #adf = RECORD #2
         #adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
         ##### TODO
         ##### witchy analysis to get a free space on address file
         ##### it'll be hard
-        self.f.seek(0,2) # points to end of file
+        ##self.f.seek(0,2) # points to end of file
         adf = b''
-        pos_rec=to_bytes_e(self.f.tell(),self.maxes['max_page_size'])
         for i,j in enumerate(self.rec_buffer):
             adf += FIELD
             adf += to_bytes_e(self.c_ids[i],self.maxes['max_cols']) #self.maxes['max_cols'] column_id
             adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
-            adf += self.page #self.maxes['max_pages'] page
             ##### TODO
             ##### pos_rec needs to be calculated
-            adf += pos_rec #self.maxes['max_page_size'] address in a page
+            data_pos_rec = self.find_empty_space(from_bytes_e(self.lengths[i])) # gets an empty space to record data
+            if data_pos_rec == None:
+                pos_rec = self.f.tell()
+                page_rec = from_bytes_e(self.page)
+                self.f.seek(0,2)
+            else:
+                pos_rec = data_pos_rec['addr']
+                page_rec = data_pos_rec['page']
+                page_needed = self.tb_prefix+zeros_needed_fmt(self.maxes['max_pages']).format(page_rec)+TBL_EXT
+                if not page_needed in self.files:
+                    self.files[page_needed] = open(page_needed,'rb+')
+                self.f = self.files[page_needed]
+            #adf += pos_rec #self.maxes['max_page_size'] address in a page
+            adf += to_bytes_e(page_rec,self.maxes['max_pages'])
+            adf += to_bytes_e(pos_rec,self.maxes['max_page_size'])
             adf += self.lengths[i]
+            adf += FIELD_END
+            rec_addr = self.find_empty_addr(len(adf))
+            if not rec_addr == None:
+                self.addr.seek(rec_addr['addr'])
+                self.clean_trash(self.addr_trash,rec_addr['trash_addr'],rec_addr['trash_len'])
             self.addr.write(adf)
             adf = b''
             ##### TODO
             ##### open the the indicated page
             ##### goto to indicated address
+            self.f.seek(pos_rec)
             self.f.write(j)
-            pos_rec=to_bytes_e(self.f.tell(),self.maxes['max_page_size'])
-        self.addr.write(FILE_END)
+            #self.clean_trash(self.data_trash,data_pos_rec['trash_addr'],data_pos_res['trash_len'])
+        self.addr.seek(0,2)
+        self.addr.write(FIELD)
         self.rec_buffer = []
         self.addr_buffer = []
         self.lengths = []
         
     def close_recorder(self):
         self.f.close()
+        for i,j in self.files.items():
+            j.close()
         self.addr.close()

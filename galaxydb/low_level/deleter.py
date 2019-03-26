@@ -8,11 +8,16 @@ class Deleter:
         self.scheme = scheme
         addr_path = self.scheme['locations']['address']+os.sep+self.name+ADDR_EXT
         self.addr = open(addr_path,'rb+')
-        trash_path = self.scheme['locations']['trash']+os.sep+self.name+TRASH_EXT
-        if os.path.isfile(trash_path):
-            self.trash = open(trash_path,'rb+')
+        addr_trash_path = self.scheme['locations']['addr_trash']+os.sep+self.name+ADDR_TRASH_EXT
+        data_trash_path = self.scheme['locations']['data_trash']+os.sep+self.name+DATA_TRASH_EXT
+        if os.path.isfile(data_trash_path):
+            self.data_trash = open(data_trash_path,'rb+')
         else:
-            self.trash = open(trash_path,'wb')
+            self.data_trash = open(data_trash_path,'wb')
+        if os.path.isfile(addr_trash_path):
+            self.addr_trash = open(addr_trash_path,'rb+')
+        else:
+            self.addr_trash = open(addr_trash_path,'wb')
         
     def delete_by_id(self,id):
         max_cols = self.scheme['max_values']['max_cols']
@@ -20,7 +25,8 @@ class Deleter:
         max_pages = self.scheme['max_values']['max_pages']
         max_page_size = self.scheme['max_values']['max_page_size']
         self.addr.seek(0)
-        self.trash.seek(0,2)
+        self.addr_trash.seek(0,2)
+        self.data_trash.seek(0,2)
         k = self.addr.read(BUF)
         if len(k) == BUF:
             k = read_until(self.addr.read,FIELD)
@@ -36,15 +42,23 @@ class Deleter:
                     if end_field == -1:
                         end_field = k.find(FILE_END,pos_field+len(FIELD))
                     sub_bytes = k[pos_field:end_field]
+                    data_trash = {
+                        'page':sub_bytes[len(FIELD)+max_cols+max_regs:len(FIELD)+max_cols+max_regs+max_pages],
+                        'addr':sub_bytes[len(FIELD)+max_cols+max_regs+max_pages:len(FIELD)+max_cols+max_regs+max_pages+max_page_size],
+                        'length':sub_bytes[len(FIELD)+max_cols+max_regs+max_pages+max_page_size:]
+                    }
+                    data_trash_dump = TRASH+data_trash['page']+data_trash['addr']+data_trash['length']
                     len_length = len(sub_bytes[len(FIELD)+max_cols+max_regs+max_pages+max_page_size:])
                     trash = FIELD
                     trash += to_bytes_e(2**(8*max_cols)-1,max_cols)
                     self.addr.seek(pos_field)
                     trash_mark = TRASH+to_bytes_e(pos_field,0)+VALUE+to_bytes_e(len(sub_bytes),0)
-                    self.trash.write(trash_mark)
+                    self.addr_trash.write(trash_mark)
+                    self.data_trash.write(data_trash_dump)
                     # records the address and length of a deleted register in address file
                     #self.addr.seek(len(trash),1) #teste
                     self.addr.write(trash)
+                    
                 offset = pos_field+len(FIELD)
                 pos_field = k.find(FIELD,offset)
             self.addr.seek(where)
@@ -53,4 +67,5 @@ class Deleter:
         pass
     
     def close_deleter(self):
-        self.trash.close()
+        self.addr_trash.close()
+        self.data_trash.close()

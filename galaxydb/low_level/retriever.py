@@ -13,7 +13,10 @@ class Retriever:
         addr_path = self.scheme['locations']['address']+os.sep+self.name+ADDR_EXT
         self.tb_prefix = self.scheme['locations']['table']+os.sep+self.name+os.sep+self.name+'-'
         self.addr_path = addr_path
-        f = open(addr_path,'rb')
+        try:
+            f = open(addr_path,'rb')
+        except:
+            raise Exception ("Address file doesn't found")
         self.addr = f
         self.files = {}
     
@@ -119,8 +122,8 @@ class Retriever:
                 temp = b''
                 for j in range(pos,pos+len(r)):
                     temp += to_bytes_e(r[j],1)
-                    pos += 1
                     next_f = b''
+                    pos += 1
                     for k in range(pos,pos+len(FIELD)):
                         next_f += to_bytes_e(r[k],1)
                     if next_f == FIELD or next_f == FILE_END:

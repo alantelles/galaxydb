@@ -2,6 +2,7 @@ from models.user import User
 from galaxydb.logic import Logic
 from galaxydb.scheme import Scheme
 from galaxydb.constants import *
+from galaxydb.low_level.recorder import Creator
 import time
 def print_row(r):
     print(r.id,r.name,r.username,r.password)
@@ -12,8 +13,6 @@ def print_list(c):
 st=time.time()
 u = User()
 l = Logic()
-print_list(u.all())
-#u.delete(l.eq('id',9))
 #recorder test
 fields = ('name','username','password')
 regs = [
@@ -26,7 +25,11 @@ regs = [
     ('Philipe Pinheiro','philipe','phrp'),
     ('Heber Passos','hebinho','1000lchopp')
 ]
+#print_list(u.filter(l.like('name','Marina','x..')).get())
+#print(u.find(1))
+#u.delete(l.like('name','Marina','x..'))
 #u.insert_by_tuple(fields,regs)
 #u.insert({'name':'Marina Pereira','username':'marina2'})
+u.insert({'name':'Melina Soneira','username':'betina2'})
 en=time.time()
 print('Benchmark:',en-st)

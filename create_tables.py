@@ -18,4 +18,5 @@ locations = {
 sch = Scheme('users')
 #sch.alter('column','contrasenha',{'name':'password'})
 sch.create(tds,max_values)
+#sch.delete_scheme()
 sch.save(True)

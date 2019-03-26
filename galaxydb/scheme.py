@@ -59,11 +59,8 @@ class Scheme:
     
     def create (self,type_defs,max_values={},locations={}): # max_values is a dict
         self.sch = dict()
-        #id_t = TypeDef('id',INT,size=max_regs,NULL=0,PRIMARY_KEY=True,AUTO_INC=True)
         type_defs.insert(0,Column('id',INT,AUTO_INC=1,PRIMARY_KEY=True))
-        #columns = {}
         columns = []
-        
         maxes = {}
         for i,j in enumerate(type_defs):
             j.params['name'] = j.name.strip()
@@ -84,8 +81,10 @@ class Scheme:
             self.sch['locations']['table'] = TABLES
         if not 'address' in locations:
             self.sch['locations']['address'] = TABLES+os.sep+self.name
-        if not 'trash' in locations:
-            self.sch['locations']['trash'] = TABLES+os.sep+self.name
+        if not 'addr_trash' in locations:
+            self.sch['locations']['addr_trash'] = TABLES+os.sep+self.name
+        if not 'data_trash' in locations:
+            self.sch['locations']['data_trash'] = TABLES+os.sep+self.name
         
     def __str__(self):
         out='Scheme: {}\n'.format(self.name)
