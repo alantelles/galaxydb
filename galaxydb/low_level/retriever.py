@@ -105,7 +105,7 @@ class Retriever:
             if r.find(FIELD+b'\x00'+id_b) < 0:
                 return None
             if len(r) == BUF:
-                r += read_until(self.addr.read,FIELD)
+                r += read_until(self.addr.read,FIELD_END+FIELD)
             for i in ret_cols:
                 pos = r.find(FIELD+i[0]+id_b)
                 pos += len(FIELD+i[0]+id_b)
@@ -124,9 +124,9 @@ class Retriever:
                     temp += to_bytes_e(r[j],1)
                     next_f = b''
                     pos += 1
-                    for k in range(pos,pos+len(FIELD)):
+                    for k in range(pos,pos+len(FIELD_END)):
                         next_f += to_bytes_e(r[k],1)
-                    if next_f == FIELD or next_f == FILE_END:
+                    if next_f == FIELD_END:
                         length = from_bytes_e(temp)
                         break
                 data[i[1]] = self.conform_val(self.find_data_by_addr(page,addr,length),from_bytes_e(i[0]))

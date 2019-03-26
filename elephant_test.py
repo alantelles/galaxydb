@@ -13,6 +13,8 @@ def print_list(c):
 st=time.time()
 u = User()
 l = Logic()
+print_row(u.login('marinapereira','minhabebe'))
+#print(u.find(5))
 #recorder test
 fields = ('name','username','password')
 regs = [
@@ -30,6 +32,6 @@ regs = [
 #u.delete(l.like('name','Marina','x..'))
 #u.insert_by_tuple(fields,regs)
 #u.insert({'name':'Marina Pereira','username':'marina2'})
-u.insert({'name':'Melina Soneira','username':'betina2'})
+#u.insert({'name':'Melina Soneira','username':'betina2'})
 en=time.time()
 print('Benchmark:',en-st)
