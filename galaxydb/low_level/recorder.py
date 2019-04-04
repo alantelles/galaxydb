@@ -40,8 +40,8 @@ class Creator:
             #page_num = zeros_needed_fmt(self.maxes['max_pages']).format(0)
             page_num = zeros_needed_fmt(self.maxes['max_pages']).format(0)
             page = self.tables_path+os.sep+self.name+'-'+page_num+TBL_EXT
-            self.f = open(page,'wb')
-            self.addr = open(self.address_path,'wb')
+            self.f = open(page,'wb+')
+            self.addr = open(self.address_path,'wb+')
         addr_trash_path = self.locations['addr_trash']+os.sep+self.name+ADDR_TRASH_EXT
         if os.path.isfile(addr_trash_path):
             self.addr_trash = open(addr_trash_path,'rb+')
@@ -134,39 +134,48 @@ class Creator:
         max_cols = self.maxes['max_cols']
         self.addr_trash.seek(0)
         r = self.addr_trash.read(BUF)
-        offset = 0
+        if len(r) == BUF:
+            r += read_until(self.addr_trash,TRASH)
         trash_addr = 0
-        trash_len = 0
         while r:
-            offset += len(r)
-            trashes = r.split(TRASH)[1:]
+            offset = self.addr_trash.tell()
+            trashes = r.split(TRASH)[1:-1]
             for t in trashes:
-                if t == b'\xFF':
+                print(t.find(PERMA_TRASH))
+                if t.find(PERMA_TRASH) > -1:
+                    trash_addr += len(TRASH)+len(t)
                     continue
-                trash_len = len(t)
                 addr,leng = t.split(VALUE)
+                leng = leng[:len(leng)-len(FIELD_END)]
                 addr_int = from_bytes_e(addr)
                 leng_int = from_bytes_e(leng)
-                self.addr.seek(addr_int)
-                seq = self.addr.read(leng_int)
-                len_avail = seq[len(FIELD)+max_cols+max_regs+max_pages+max_page_size:]
-                in_page = seq[len(FIELD)+max_cols+max_regs:len(FIELD)+max_cols+max_regs+max_pages]
-                in_addr = seq[len(FIELD)+max_cols+max_regs:len(FIELD)+max_cols+max_regs+max_pages]
-                if from_bytes_e(len_avail) == length:
+                if leng_int == length:
                     #can save here
-                    return {'addr':addr_int,'trash_addr':to_bytes_e(trash_addr),'trash_len':to_bytes_e(trash_len)}
-                trash_addr += len(t)
-            self.addr_trash.seek(offset)
+                    print ({'addr':addr_int,'trash_addr':trash_addr,'trash_len':len(TRASH)+len(t)})
+                    return {'addr':addr_int,'trash_addr':trash_addr,'trash_len':len(TRASH)+len(t)}
+                trash_addr += len(TRASH)+len(t)
             r = self.addr_trash.read(BUF)
+            if len(r) == BUF:
+                r += read_until(self.addr_trash,TRASH)
         return None
     
     def clean_trash (self,f,pos,length):
-        to_write = b''
-        for x in bytes(length):
-            to_write += b'\xFF'
+        f.seek(pos+length-len(PERMA_TRASH))
+        f.write(PERMA_TRASH)
+        
+    def clean_data_trash (self,f,pos,length,length_rec):
+        max_regs = self.maxes['max_regs']
+        max_pages = self.maxes['max_pages']
+        max_page_size = self.maxes['max_page_size']
+        max_cols = self.maxes['max_cols']
+        where = f.tell()
         f.seek(pos)
-        f.write(to_write)
-    
+        r = f.read(length)
+        length_trash = from_bytes_e(r[len(TRASH)+max_pages+max_page_size:-len(FIELD_END)])
+        rest_space = length_trash - length_rec
+        f.seek(pos)
+        f.write(r[:len(FIELD)+max_pages+max_page_size]+to_bytes_e(rest_space,0)+PERMA_TRASH)
+        
     def find_empty_space(self,length):
         max_regs = self.maxes['max_regs']
         max_pages = self.maxes['max_pages']
@@ -174,17 +183,18 @@ class Creator:
         max_cols = self.maxes['max_cols']
         self.data_trash.seek(0)
         r = self.data_trash.read(BUF)
-        offset = 0
+        if len(r) == BUF:
+            r += read_until(self.data_trash,TRASH)
         trash_addr = 0
         while r:
-            offset += len(r)
             trashes = r.split(TRASH)[1:]
             for t in trashes:
-                if t.find(FIELD_END) < 0:
+                if t.find(PERMA_TRASH) > -1:
+                    trash_addr += len(TRASH)+len(t)
                     continue
                 page = t[:max_pages]
-                addr = t[max_pages:max_pages+max_cols]
-                len_avail = t[max_pages+max_cols:t.find(FIELD_END)]
+                addr = t[max_pages:max_pages+max_page_size]
+                len_avail = t[max_pages+max_page_size:t.find(FIELD_END)]
                 if from_bytes_e(len_avail) >= length:
                     #can save here
                     return {
@@ -192,11 +202,12 @@ class Creator:
                         'page':from_bytes_e(page),
                         'length':from_bytes_e(len_avail),
                         'trash_addr':trash_addr,
-                        'trash_len':to_bytes_e(trash_addr)
+                        'trash_len':len(TRASH)+len(t)
                     }
-                trash_addr += len(t)
-            self.data_trash.seek(offset)
+                trash_addr += len(TRASH)+len(t)
             r = self.data_trash.read(BUF)
+            if len(r) == BUF:
+                r += read_until(self.data_trash,TRASH)
         return None
         
     def is_new(self,id):
@@ -258,9 +269,11 @@ class Creator:
             self.f.seek(pos_rec)
             self.f.write(j)
             if not data_pos_rec == None:
-                self.clean_trash(self.data_trash,data_pos_rec['trash_addr'],data_pos_rec['trash_len'])
-        self.addr.seek(0,2)
-        self.addr.write(FIELD)
+                self.clean_data_trash(self.data_trash,data_pos_rec['trash_addr'],data_pos_rec['trash_len'],len(j))
+        self.addr.seek(-2,2)
+        r = self.addr.read(len(FIELD_END))
+        if r == FIELD_END:
+            self.addr.write(FIELD)
         self.rec_buffer = []
         self.addr_buffer = []
         self.lengths = []
