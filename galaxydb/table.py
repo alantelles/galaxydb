@@ -17,6 +17,7 @@ class Table():
         with open(self.sch_path,'rt') as f:
             self.scheme = json.load(f)
             
+            
     def auto_inc(self,column):
         s = Scheme(self.name)
         self.scheme = s.auto_inc(column)

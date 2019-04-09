@@ -141,7 +141,6 @@ class Creator:
             offset = self.addr_trash.tell()
             trashes = r.split(TRASH)[1:-1]
             for t in trashes:
-                print(t.find(PERMA_TRASH))
                 if t.find(PERMA_TRASH) > -1:
                     trash_addr += len(TRASH)+len(t)
                     continue
@@ -151,7 +150,6 @@ class Creator:
                 leng_int = from_bytes_e(leng)
                 if leng_int == length:
                     #can save here
-                    print ({'addr':addr_int,'trash_addr':trash_addr,'trash_len':len(TRASH)+len(t)})
                     return {'addr':addr_int,'trash_addr':trash_addr,'trash_len':len(TRASH)+len(t)}
                 trash_addr += len(TRASH)+len(t)
             r = self.addr_trash.read(BUF)
@@ -226,20 +224,11 @@ class Creator:
             
     def commit(self):
         self.get_auto_inc()
-        #self.addr.seek(-2,2)
-        #adf = RECORD #2
-        #adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
-        ##### TODO
-        ##### witchy analysis to get a free space on address file
-        ##### it'll be hard
-        ##self.f.seek(0,2) # points to end of file
         adf = b''
         for i,j in enumerate(self.rec_buffer):
             adf += FIELD
             adf += to_bytes_e(self.c_ids[i],self.maxes['max_cols']) #self.maxes['max_cols'] column_id
             adf += to_bytes_e(self.last_pri,self.maxes['max_regs']) #2
-            ##### TODO
-            ##### pos_rec needs to be calculated
             data_pos_rec = self.find_empty_space(from_bytes_e(self.lengths[i])) # gets an empty space to record data
             if data_pos_rec == None:
                 pos_rec = self.f.tell()
@@ -252,7 +241,6 @@ class Creator:
                 if not page_needed in self.files:
                     self.files[page_needed] = open(page_needed,'rb+')
                 self.f = self.files[page_needed]
-            #adf += pos_rec #self.maxes['max_page_size'] address in a page
             adf += to_bytes_e(page_rec,self.maxes['max_pages'])
             adf += to_bytes_e(pos_rec,self.maxes['max_page_size'])
             adf += self.lengths[i]
@@ -261,19 +249,44 @@ class Creator:
             if not rec_addr == None:
                 self.addr.seek(rec_addr['addr'])
                 self.clean_trash(self.addr_trash,rec_addr['trash_addr'],rec_addr['trash_len'])
+            else:
+                self.addr.seek(0,2)
             self.addr.write(adf)
             adf = b''
             ##### TODO
             ##### open the the indicated page
             ##### goto to indicated address
-            self.f.seek(pos_rec)
-            self.f.write(j)
+            len_write = from_bytes_e(self.lengths[i])
+            if len_write < (max_int_bytes(self.maxes['max_page_size'])-pos_rec):
+                self.f.write(j)
+            else:
+                partial = j[:max_int_bytes(self.maxes['max_page_size'])-pos_rec]
+                self.f.write(partial)
+                rest = j[len(partial):]
+                while len(rest) > max_int_bytes(self.maxes['max_page_size']):
+                    page_rec += 1
+                    page_needed = self.tb_prefix+zeros_needed_fmt(self.maxes['max_pages']).format(page_rec)+TBL_EXT
+                    if not page_needed in self.files:
+                        if os.path.isfile(page_needed):
+                            self.files[page_needed] = open(page_needed,'rb+')
+                        else:
+                            self.page = to_bytes_e(page_rec,self.maxes['max_pages'])
+                            self.files[page_needed] = open(page_needed,'wb+')
+                    #rest = j[len(partial):]
+                    self.files[page_needed].write(rest[:max_int_bytes(self.maxes['max_page_size'])])
+                    rest = rest[max_int_bytes(self.maxes['max_page_size']):]
+                page_rec += 1
+                self.page = to_bytes_e(page_rec,self.maxes['max_pages'])
+                page_needed = self.tb_prefix+zeros_needed_fmt(self.maxes['max_pages']).format(page_rec)+TBL_EXT
+                if not page_needed in self.files:
+                    if os.path.isfile(page_needed):
+                        self.files[page_needed] = open(page_needed,'rb+')
+                    else:
+                        self.files[page_needed] = open(page_needed,'wb+')
+                self.f = self.files[page_needed]
+                self.f.write(rest)
             if not data_pos_rec == None:
                 self.clean_data_trash(self.data_trash,data_pos_rec['trash_addr'],data_pos_rec['trash_len'],len(j))
-        self.addr.seek(-2,2)
-        r = self.addr.read(len(FIELD_END))
-        if r == FIELD_END:
-            self.addr.write(FIELD)
         self.rec_buffer = []
         self.addr_buffer = []
         self.lengths = []
@@ -282,4 +295,6 @@ class Creator:
         self.f.close()
         for i,j in self.files.items():
             j.close()
+        self.addr.seek(0,2)
+        self.addr.write(FIELD)
         self.addr.close()

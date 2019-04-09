@@ -10,6 +10,9 @@ def zeros_needed_fmt(num):
     zeros = str(num)
     return r"{:0"+str(len(zeros))+r"d}"
     
+def max_int_bytes(b):
+    return 2**(8*b)
+    
 def print_bytes(seq):
     out = []
     for i in seq:

@@ -90,8 +90,15 @@ class Retriever:
         max_pages = self.scheme['max_values']['max_pages']
         max_page_size = self.scheme['max_values']['max_page_size']
         max_cols = self.scheme['max_values']['max_cols']
+        not_found = False
         id_b = to_bytes_e(id,max_regs)
+        id_col_code = b''
+        for _ in range(max_cols):
+            id_col_code += b'\x00'
+        id_field = FIELD+id_col_code+id_b
         r = self.addr.read(BUF)
+        if len(r) == BUF:
+            r += read_until(self.addr,FIELD_END+FIELD)
         offset = 0
         ret_cols = []
         if len(columns) > 0:
@@ -102,13 +109,19 @@ class Retriever:
             for i in self.scheme['columns']:
                 ret_cols.append((to_bytes_e(i['col_id'],max_cols),i['name']))
         while r:
-            if r.find(FIELD+b'\x00'+id_b) < 0:
-                return None
-            if len(r) == BUF:
-                r += read_until(self.addr.read,FIELD_END+FIELD)
+            pos = r.find(id_field)
+            if pos < 0:
+                not_found = True
+                r = self.addr.read(BUF)
+                if len(r) == BUF:
+                    r += read_until(self.addr,FIELD_END+FIELD)
+                offset = len(r)
+                continue
+            not_found = False
             for i in ret_cols:
-                pos = r.find(FIELD+i[0]+id_b)
-                pos += len(FIELD+i[0]+id_b)
+                id_field = i[0]+id_b
+                pos = r.find(id_field)
+                pos += len(id_field)
                 temp = b''
                 for j in range(pos,pos+max_pages):
                     temp += to_bytes_e(r[j],1)
@@ -130,9 +143,8 @@ class Retriever:
                         length = from_bytes_e(temp)
                         break
                 data[i[1]] = self.conform_val(self.find_data_by_addr(page,addr,length),from_bytes_e(i[0]))
-            r = self.addr.read(BUF)
-            offset = len(r)
-        return data
+            return data
+        return None
                 
     def find_all(self,columns=[]):
         # working for new address model
