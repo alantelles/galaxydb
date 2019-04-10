@@ -30,7 +30,15 @@ class Retriever:
         if not page_needed in self.files:
             self.files[page_needed] = open(page_needed,'rb')
         self.files[page_needed].seek(addr)
-        return self.files[page_needed].read(length)
+        read = self.files[page_needed].read(length)
+        while len(read) < length:
+            page += 1
+            page_needed = self.tb_prefix+zeros_needed_fmt(self.scheme['max_values']['max_pages']).format(page)+TBL_EXT
+            if not page_needed in self.files:
+                self.files[page_needed] = open(page_needed,'rb')
+            self.files[page_needed].seek(0)
+            read += self.files[page_needed].read(length-len(read))
+        return read
     
     def find_records_by_field_sequential (self,columns,logic,*field_relation_val_tuples):
         # working for new address model

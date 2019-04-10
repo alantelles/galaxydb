@@ -38,4 +38,5 @@ print('Insert benchmark:',ins-st)
 en=time.time()
 fi_b = en-ins
 print('Find benchmark:',fi_b)
+print_list(u.filter(Logic().like('password','Donec')).get())
 print('Benchmark:',en-st)
